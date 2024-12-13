@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 import glob
-import datetime
+from datetime import datetime
 import matplotlib.pyplot as plt
 from PIL import Image
 import re
@@ -19,6 +19,12 @@ from pyts.image import MarkovTransitionField
 current_directory_path = Path.cwd()
 directory = current_directory_path.parent /'activity_resistance_ML' / 'processed' 
 data_loc = sorted(directory.glob('*_processed.xlsx')) 
+
+
+## filter data by measured date
+upto_date = datetime.strptime('20241002', '%Y%m%d')
+filtered_data_loc = [i for i in data_loc if datetime.strptime(i.name.split('_')[0], '%Y%m%d') > upto_date]
+###################################
 
 
 def convert_to_RGB(array, name, conversion_method, size):
@@ -41,6 +47,7 @@ def convert_to_RGB(array, name, conversion_method, size):
 
     resized = image_pil.resize((size,size))
     resized.save(name)
+    plt.close()
 
 def extract_name(file):
     return file.name.split('.')[0].split('_')
@@ -51,7 +58,7 @@ def save_raw_data(df, x_data, y_data, file_name):
     plt.figure()
     sns.scatterplot(data = df, x = x_data, y = y_data)
     plt.savefig(file_name_to_save)
-
+    plt.close()
 
 def convert_to_image(df, file_name, time_cut, conversion_method, size, directory_to_save, flag_save_raw_data):
     """
@@ -119,6 +126,7 @@ def convert_to_image(df, file_name, time_cut, conversion_method, size, directory
 def save_image_after_conversion(data_loc, conversion_method, flag_save_raw_data, size):
     directory_to_save = current_directory_path / conversion_method
 
+
     for file in data_loc:
         df = pd.read_excel(file, sheet_name = 'sensitivity')
         df['time_diff'] = df['elapsed_time'].diff()
@@ -127,10 +135,10 @@ def save_image_after_conversion(data_loc, conversion_method, flag_save_raw_data,
         file_name = extract_name(file)
         convert_to_image(df, file_name, time_cut, conversion_method, size, directory_to_save, flag_save_raw_data)
 
-save_image_after_conversion(data_loc, 'MTF', False, 128)
-save_image_after_conversion(data_loc, 'GAF_sum', False, 128)
-save_image_after_conversion(data_loc, 'GAF_diff', False, 128)
-save_image_after_conversion(data_loc, 'recurrence', False, 128)
+#save_image_after_conversion(filtered_data_loc, 'MTF', False, 128)
+save_image_after_conversion(filtered_data_loc, 'GAF_sum', False, 128)
+save_image_after_conversion(filtered_data_loc, 'GAF_diff', False, 128)
+save_image_after_conversion(filtered_data_loc, 'recurrence', False, 128)
 
 
 

@@ -22,15 +22,24 @@ max_epoch = 100
 #            'diff_e100': 'GAF_diff', 'diff_e100_v1': 'GAF_diff', 'diff_e100_v2': 'GAF_diff',
 #     'rec_e100': 'recurrence', 'rec_e100_v1': 'recurrence', 'rec_e100_v2': 'recurrence'}
 
-exp_run = {'sum_e100_add1': 'GAF_sum', 'sum_e100_add2': 'GAF_sum', 'sum_e100_add3': 'GAF_sum', 
-           'diff_e100_add1': 'GAF_diff', 'diff_e100_add2': 'GAF_diff', 'diff_e100_add3': 'GAF_diff'}
+exp_run = {'sum_512_ver1': 'GAF_sum', 'sum_512_ver2': 'GAF_sum', 'sum_512_ver3': 'GAF_sum',
+           'sum_128_ver1': 'GAF_sum', 'sum_128_ver2': 'GAF_sum', 'sum_128_ver3': 'GAF_sum',
+           'sum_32_ver1': 'GAF_sum', 'sum_32_ver2': 'GAF_sum', 'sum_32_ver3': 'GAF_sum',
+           'sum_16_ver1': 'GAF_sum', 'sum_16_ver2': 'GAF_sum', 'sum_16_ver3': 'GAF_sum',
+           'sum_8_ver1': 'GAF_sum', 'sum_8_ver2': 'GAF_sum', 'sum_8_ver3': 'GAF_sum', 
+
+           'diff_512_ver1': 'GAF_diff', 'diff_512_ver2': 'GAF_diff', 'diff_512_ver3': 'GAF_diff',
+           'diff_128_ver1': 'GAF_diff', 'diff_128_ver2': 'GAF_diff', 'diff_128_ver3': 'GAF_diff',
+           'diff_32_ver1': 'GAF_diff', 'diff_32_ver2': 'GAF_diff', 'diff_32_ver3': 'GAF_diff',
+           'diff_16_ver1': 'GAF_diff', 'diff_16_ver2': 'GAF_diff', 'diff_16_ver3': 'GAF_diff',
+           'diff_8_ver1': 'GAF_diff', 'diff_8_ver2': 'GAF_diff', 'diff_8_ver3': 'GAF_diff'}
 
 class SimCLR(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, out):
         super().__init__()
         resnet = torchvision.models.resnet18()
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
-        self.projection_head = SimCLRProjectionHead(512, 2048, 2048) #default for out =  2048
+        self.projection_head = SimCLRProjectionHead(512, out, out) #default for out =  2048
 
         # enable gather_distributed to gather features from all gpus
         # before calculating the loss
@@ -98,6 +107,7 @@ class SimCLR(pl.LightningModule):
 for key, value in exp_run.items():
 
     file_version = key
+    out_size = int(key.split('_')[1])
     image_folder_path = Path.cwd() / value
 
 
@@ -126,7 +136,7 @@ for key, value in exp_run.items():
 
 
 
-    model = SimCLR()
+    model = SimCLR(out_size)
     torch.cuda.empty_cache()
     trainer.fit(model=model, train_dataloaders=dataloader)
     torch.save(model.state_dict(), './' + file_version +'.pth')
